@@ -1,4 +1,4 @@
-  name: Monitor Gist and Create Issue
+name: Monitor Gist and Create Issue
 
 on:
   schedule:
@@ -37,7 +37,7 @@ jobs:
           curl -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -d '{"title":"New Gist Update","body":"A new update has been made to the Gist."}' \
-            https://api.github.com/repos//thouikor/gistissue/issues
+            https://api.github.com/repos/thouikor/gistissue/issues
 
           echo $updated_at > $last_updated_file
         else
