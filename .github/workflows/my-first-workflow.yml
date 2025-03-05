@@ -1,22 +1,25 @@
-name: GIST Update Issue
+name: Gist to Issue
 
 on:
   push:
     paths:
-      - '**/*.txt'  # txt 파일이 푸시될 때만 트리거됨
+      - '**.TXT'  # Gist에 업로드할 파일 유형을 설정합니다. 예: '.md' 또는 다른 형식
+    branches:
+      - main
 
 jobs:
-  create-issue:
+  create_issue:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v2
-    
-    - name: Create GitHub Issue
-      uses: peter-evans/create-issue-from-file@v2
-      with:
-        title: "New GIST file update"
-        content: |
-          A new GIST file has been updated. Please review the changes.
-        labels: update
+
+    - name: Create an issue on GitHub
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        curl -X POST \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          -d '{"title":"New Gist Uploaded","body":"A new Gist has been uploaded. Check it out."}' \
+          https://api.github.com/repos/OWNER/REPO/issues
