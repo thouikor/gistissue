@@ -1,25 +1,48 @@
-name: Gist to Issue
+name: Monitor Gist and Create Issue
 
 on:
-  push:
-    paths:
-      - '**.TXT'  # Gist에 업로드할 파일 유형을 설정합니다. 예: '.md' 또는 다른 형식
-    branches:
-      - main
+  schedule:
+    - cron: "*/5 * * * *"  # 매 5분마다 실행 (원하는 주기로 변경 가능)
 
 jobs:
-  create_issue:
+  monitor_gist:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Create an issue on GitHub
+    - name: Check for Gist updates
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        curl -X POST \
-          -H "Authorization: token $GITHUB_TOKEN" \
-          -d '{"title":"New Gist Uploaded","body":"A new Gist has been uploaded. Check it out."}' \
-          https://api.github.com/repos/OWNER/REPO/issues
+        # Gist API를 사용하여 Gist 내용을 가져옵니다.
+        gist_id="3d83fb50ad69da1b7837a1beafd69cd0"  # Gist의 ID를 설정하세요.
+        response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/gists/$gist_id")
+        
+        # Gist의 마지막 수정 시간을 확인
+        updated_at=$(echo $response | jq -r '.updated_at')
+
+        # 마지막으로 이슈를 생성한 시간 기록 (이 예제에서는 간단한 로직으로 처리합니다)
+        last_updated_file=".last_updated"
+
+        if [ -f $last_updated_file ]; then
+          last_updated=$(cat $last_updated_file)
+        else
+          last_updated=""
+        fi
+
+        if [ "$updated_at" != "$last_updated" ]; then
+          echo "New update detected in Gist"
+
+          # Gist 업데이트가 감지되면 GitHub Issues에 새 이슈를 생성합니다.
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -d '{"title":"New Gist Update","body":"A new update has been made to the Gist."}' \
+            https://api.github.com/repos/thouikor/gistissue/issues
+
+          # 마지막으로 업데이트된 시간을 저장
+          echo $updated_at > $last_updated_file
+        else
+          echo "No new updates detected"
+        fi
